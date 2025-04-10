@@ -1,3 +1,6 @@
+
+# todo: no need to send a request to a file like .pdf
+
 import bs4
 import requests as req
 from bs4 import BeautifulSoup
@@ -28,6 +31,24 @@ def IsSubPath(url, base_url):
         return False
     return True
     
+def ShouldInvestigatePath(url):
+    # This function is made to significantly speed up the script
+    """Should not send a request to check for other links if its a file of type .pdf, .xlsx, etc."""
+    excluded_extensions = (
+        '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+        '.txt', '.csv', '.zip', '.rar', '.7z', '.tar', '.gz',
+        '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.webp',
+        '.mp3', '.wav', '.ogg', '.mp4', '.avi', '.mkv', '.mov',
+        '.exe', '.msi', '.apk', '.dmg', '.iso', '.bin',
+        '.json', '.xml', '.yaml', '.yml',
+        '.log', '.rtf', '.odt', '.ods', '.odp',
+        '.psd', '.ai', '.eps', '.ttf', '.otf',
+    )
+    
+    if url.lower().endswith(excluded_extensions):
+        return False
+    return True
+
 def GetEveryWebsiteSubPath(url, base_url, maxDepthOption=False, onlySubPaths=False, depth=0, maxDepth=5):
     if depth > maxDepth:
         print(colorama.Fore.YELLOW + f"Max depth reached at: {url}")
@@ -59,9 +80,15 @@ def GetEveryWebsiteSubPath(url, base_url, maxDepthOption=False, onlySubPaths=Fal
                     if logFileHandle is not None:
                         logFileHandle.write(full_url + "\n")
                         logFileHandle.flush()
-                    
-                    GetEveryWebsiteSubPath(url=full_url, base_url=base_url,
-                                           onlySubPaths=onlySubPaths, depth=depth+1 if maxDepthOption else depth, maxDepth=maxDepth)
+
+                    if ShouldInvestigatePath(url=full_url):
+                        GetEveryWebsiteSubPath(
+                            url=full_url, 
+                            base_url=base_url,
+                            onlySubPaths=onlySubPaths, 
+                            depth=depth+1 if maxDepthOption else depth, 
+                            maxDepth=maxDepth
+                        )
     
     except bs4.exceptions.ParserRejectedMarkup as e:
         print(colorama.Back.RED + "[ERROR]:" + colorama.Style.RESET_ALL +
