@@ -18,6 +18,7 @@ def IsValidUrl(url):
         return False
 
 def UrlPathDictionary(url):
+    """Converts a url from: http://www.test.com/folder/file.txt to: http://www.test.com/folder/"""
     return re.sub(r'\.\w+$', '', url)
 
 def IsSubPath(url, base_url):
@@ -27,7 +28,7 @@ def IsSubPath(url, base_url):
         return False
     return True
     
-def GetEveryWebsiteSubPath(url, base_url, onlySubPaths=False, depth=0, maxDepth=5):
+def GetEveryWebsiteSubPath(url, base_url, maxDepthOption=False, onlySubPaths=False, depth=0, maxDepth=5):
     if depth > maxDepth:
         print(colorama.Fore.YELLOW + f"Max depth reached at: {url}")
         return
@@ -60,16 +61,11 @@ def GetEveryWebsiteSubPath(url, base_url, onlySubPaths=False, depth=0, maxDepth=
                         logFileHandle.flush()
                     
                     GetEveryWebsiteSubPath(url=full_url, base_url=base_url,
-                                           onlySubPaths=onlySubPaths, depth=depth+1, maxDepth=maxDepth)
+                                           onlySubPaths=onlySubPaths, depth=depth+1 if maxDepthOption else depth, maxDepth=maxDepth)
     
     except bs4.exceptions.ParserRejectedMarkup as e:
         print(colorama.Back.RED + "[ERROR]:" + colorama.Style.RESET_ALL +
               colorama.Fore.RED + f" Error parsing {url}: {e}")
-
-def Testing():
-    url = 'https://www.novonordisk.com/investors.html'
-    base_url = UrlPathDictionary(url)
-    GetEveryWebsiteSubPath(url=url, base_url=base_url, maxDepth=3)
 
 def UI():
     global logFileHandle
@@ -98,17 +94,19 @@ def UI():
     else:
         onlySubPaths = bool(int(onlySubPaths))
     
-    maxDepth = input("Max Depth (Default: 5): ")
+    maxDepth = input("Max Depth (Default: no max depth): ")
     if maxDepth == "":
-        maxDepth = 5
+        maxDepth = 0
+        maxDepthOption = False
     else:
         maxDepth = int(maxDepth)
+        maxDepthOption = True
     
     logFile = input("Save urls in filename.txt (leave empty to skip): ")
     if logFile.strip() != "":
         logFileHandle = open(logFile, "w")
     
-    GetEveryWebsiteSubPath(url=url, base_url=base_url, onlySubPaths=onlySubPaths, maxDepth=maxDepth)
+    GetEveryWebsiteSubPath(url=url, base_url=base_url, maxDepthOption=maxDepthOption, onlySubPaths=onlySubPaths, maxDepth=maxDepth)
     
     if logFileHandle is not None:
         logFileHandle.close()
